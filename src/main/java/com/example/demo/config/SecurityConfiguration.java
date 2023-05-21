@@ -11,6 +11,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.authorization.AuthorityAuthorizationManager;
 import org.springframework.security.authorization.AuthorizationDecision;
 import org.springframework.security.authorization.AuthorizationManager;
@@ -53,7 +54,6 @@ public class SecurityConfiguration {
 
     private final IcesiAuthenticatorManager icesiAuthenticatorManager;
 
-    private final PermissionRepository permissionRepository;
 
     private final String secret = "longenoughsecrettotestjwtencrypt";
 
@@ -64,8 +64,11 @@ public class SecurityConfiguration {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, AuthorizationManager<RequestAuthorizationContext> access) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http,
+                                                   AuthorizationManager<RequestAuthorizationContext> access)
+            throws Exception {
         return http
+                .cors(AbstractHttpConfigurer::disable)
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .anyRequest().access(access))
@@ -87,19 +90,18 @@ public class SecurityConfiguration {
     }
 
     @Bean
-    @Transactional(propagation= Propagation.REQUIRED, readOnly=true, noRollbackFor=Exception.class)
-    public AuthorizationManager<RequestAuthorizationContext> requestMatcherAuthorizationManager(HandlerMappingIntrospector introspector) {
-        Map<RequestMatcher, List<String>> roleMap = StreamSupport.stream(permissionRepository.findAll().spliterator(),false)
-                .collect(Collectors.toMap(icesiPermission -> new MvcRequestMatcher(introspector, icesiPermission.getPath()),
-                        icesiPermission -> icesiPermission.getRoles().stream().map(icesiRole -> "SCOPE_" + icesiRole.getRoleName()).toList(),
-                        (actualList, newList) -> Stream.of(actualList, newList).flatMap(Collection::stream).distinct().toList()));
-
+    public AuthorizationManager<RequestAuthorizationContext> requestMatcherAuthorizationManager
+            (HandlerMappingIntrospector introspector) {
         RequestMatcher permitAll = new AndRequestMatcher(new MvcRequestMatcher(introspector, "/token"));
 
-        RequestMatcherDelegatingAuthorizationManager.Builder managerBuilder = RequestMatcherDelegatingAuthorizationManager.builder()
+        RequestMatcherDelegatingAuthorizationManager.Builder managerBuilder
+                = RequestMatcherDelegatingAuthorizationManager.builder()
                 .add(permitAll, (context, other) -> new AuthorizationDecision(true));
 
-        roleMap.forEach((matcher, authorities) -> managerBuilder.add(matcher, AuthorityAuthorizationManager.hasAnyAuthority(authorities.toArray(new String[0]))));
+        managerBuilder.add(new MvcRequestMatcher(introspector, "/admin/**"),
+                AuthorityAuthorizationManager.hasAnyAuthority("SCOPE_ADMIN"));
+        managerBuilder.add(new MvcRequestMatcher(introspector, "/user"),
+                AuthorityAuthorizationManager.hasAnyAuthority("SCOPE_USER"));
 
 
         AuthorizationManager<HttpServletRequest> manager = managerBuilder.build();

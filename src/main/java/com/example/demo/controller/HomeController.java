@@ -1,6 +1,7 @@
 package com.example.demo.controller;
 
 import com.example.demo.security.IcesiSecurityContext;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -20,7 +21,7 @@ public class HomeController {
 
     @GetMapping("/admin")
     public String admin() throws ParseException {
-        return "Hello, admin " + IcesiSecurityContext.getCurrentUserId();
+        return "Hello, admin " + IcesiSecurityContext.getCurrentUserId() + " " + IcesiSecurityContext.getCurrentUserRole();
     }
 
 

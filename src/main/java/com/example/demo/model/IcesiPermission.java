@@ -25,6 +25,7 @@ public class IcesiPermission {
     @Type(type = "pg-uuid")
     private UUID permissionId;
     private String path;
+    @Column(name = "`key`")
     private String key;
 
     @ManyToMany(mappedBy = "permissionList", cascade = CascadeType.ALL, fetch = FetchType.LAZY)

@@ -1,5 +1,7 @@
 package com.example.demo.service;
 
+import com.example.demo.dto.TokenDTO;
+import com.example.demo.security.CustomAuthentication;
 import lombok.AllArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -21,8 +23,8 @@ public class TokenService {
 
     private final JwtEncoder encoder;
 
-    public String generateToken(Authentication authentication) {
-        Map<String, String> details = (Map<String, String>) authentication.getDetails();
+    public TokenDTO generateToken(Authentication authentication) {
+        CustomAuthentication customAuthentication = (CustomAuthentication) authentication;
         Instant now = Instant.now();
         String scope = authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
@@ -33,10 +35,10 @@ public class TokenService {
                 .expiresAt(now.plus(1, ChronoUnit.HOURS))
                 .subject(authentication.getName())
                 .claim("scope", scope)
-                .claim("icesiUserId", details.get("icesiUserId"))
+                .claim("icesiUserId", customAuthentication.getUserId())
                 .build();
         var encoderParameters = JwtEncoderParameters.from(JwsHeader.with(MacAlgorithm.HS256).build(), claims);
-        return this.encoder.encode(encoderParameters).getTokenValue();
+        return new TokenDTO(this.encoder.encode(encoderParameters).getTokenValue());
     }
 
 

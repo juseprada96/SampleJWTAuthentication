@@ -22,8 +22,11 @@ public class DemoApplication {
 		SpringApplication.run(DemoApplication.class, args);
 	}
 
-	//@Bean
-	CommandLineRunner commandLineRunner(UserManagementRepository users, RoleRepository roleRepository, PermissionRepository permissionRepository, PasswordEncoder encoder) {
+	@Bean
+	CommandLineRunner commandLineRunner(UserManagementRepository users,
+										RoleRepository roleRepository,
+										PermissionRepository permissionRepository,
+										PasswordEncoder encoder) {
 		IcesiPermission icesiPermission = IcesiPermission.builder()
 				.key("home")
 				.path("/home")

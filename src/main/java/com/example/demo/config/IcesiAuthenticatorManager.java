@@ -1,6 +1,7 @@
 package com.example.demo.config;
 
 import com.example.demo.model.SecurityUser;
+import com.example.demo.security.CustomAuthentication;
 import com.example.demo.service.UserManagementService;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -18,7 +19,8 @@ public class IcesiAuthenticatorManager extends DaoAuthenticationProvider {
 
 
 
-    public IcesiAuthenticatorManager(UserManagementService userManagementService, PasswordEncoder passwordEncoder) {
+    public IcesiAuthenticatorManager(UserManagementService userManagementService,
+                                     PasswordEncoder passwordEncoder) {
         this.setUserDetailsService(userManagementService);
         this.setPasswordEncoder(passwordEncoder);
     }
@@ -27,11 +29,12 @@ public class IcesiAuthenticatorManager extends DaoAuthenticationProvider {
     @Override
     public Authentication createSuccessAuthentication(Object principal, Authentication authentication,
                                                       UserDetails user) {
-        UsernamePasswordAuthenticationToken successAuthentication = (UsernamePasswordAuthenticationToken) super.createSuccessAuthentication(principal, authentication, user);
+        UsernamePasswordAuthenticationToken successAuthentication =
+                (UsernamePasswordAuthenticationToken) super.createSuccessAuthentication(principal,
+                        authentication, user);
         SecurityUser securityUser = (SecurityUser) user;
-        Map<String, String> icesiUserDetails = Map.of("icesiUserId", securityUser.icesiUser().getIcesiUserId().toString());
-        successAuthentication.setDetails(icesiUserDetails);
-        return  successAuthentication;
+        return new CustomAuthentication(successAuthentication,
+                securityUser.icesiUser().getIcesiUserId().toString());
 
     }
 

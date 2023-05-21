@@ -35,7 +35,7 @@ public class IcesiUser {
     private String address;
     private int age;
 
-    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private IcesiRole role;
 
 
